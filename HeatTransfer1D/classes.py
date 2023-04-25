@@ -4,12 +4,14 @@ class HeatTransfer1D(object):
 
     def __init__(self, x_nodes, length, k, area, bc1, bc2) -> None:
         
-        self.x_nodes = 5
-        self.length = 0.5  # meters
-        self.k = 1000  # W / m.K 
-        self.area = 10E-3  # m^2
-        self.bc1 = 100  # K 
-        self.bc2 = 500  # K
+        self.x_nodes = x_nodes
+        self.length = length  # meters
+        self.k = k  # W / m.K 
+        self.area = area  # m^2
+        self.bc1 = bc1  # K 
+        self.bc2 = bc2  # K
+
+        # init variables 
         self.a_p = np.empty(self.x_nodes, dtype=float) 
         self.a_e = np.empty(self.x_nodes, dtype=float)
         self.a_w = np.empty(self.x_nodes, dtype=float)
