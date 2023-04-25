@@ -2,7 +2,7 @@ import numpy as np
 
 class HeatTransfer1D(object): 
 
-    def __init__(self) -> None:
+    def __init__(self, x_nodes, length, k, area, bc1, bc2) -> None:
         
         self.x_nodes = 5
         self.length = 0.5  # meters

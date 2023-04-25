@@ -1,4 +1,5 @@
 from classes import HeatTransfer1D
+import matplotlib.pyplot as plt 
 
 
 def main(): 
