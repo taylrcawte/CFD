@@ -29,13 +29,13 @@ class HeatTransfer1D(object):
         
         # do the common values first i.e. all internal nodes
         # TODO: can maybe turn the things used to calculate a_w, a_e, etc. into functions
-        a_w = calculate_internal_a_w(self.area, self.k, self.dx)
-        a_e = calculate_internal_a_e(self.area, self.k, self.dx)
-        a_p = calculate_internal_a_p(a_w, a_e) 
+        a_w = calculate_internal_a_w(self.area, self.k, self.dx, condition='case1')
+        a_e = calculate_internal_a_e(self.area, self.k, self.dx, condition='case1')
+        a_p = calculate_internal_a_p(a_w, a_e, condition='case1') 
         # since we are assuming source free heat then we know that the internal 
         # nodes have no heat generation term to them 
-        s_p = calculate_internal_s_p()
-        s_u = calculate_internal_s_u() 
+        s_p = calculate_internal_s_p(condition='case1')
+        s_u = calculate_internal_s_u(condition='case1') 
         
         # fill arrays with the values 
         self.a_w.fill(a_w)
