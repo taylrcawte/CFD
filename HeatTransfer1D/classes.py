@@ -28,7 +28,6 @@ class HeatTransfer1D(object):
     def calculate_coefficients(self) -> None:
         
         # do the common values first i.e. all internal nodes
-        # TODO: can maybe turn the things used to calculate a_w, a_e, etc. into functions
         a_w = calculate_internal_a_w(self.area, self.k, self.dx, condition='case1')
         a_e = calculate_internal_a_e(self.area, self.k, self.dx, condition='case1')
         a_p = calculate_internal_a_p(a_w, a_e, condition='case1') 
@@ -48,6 +47,8 @@ class HeatTransfer1D(object):
 
         boundary_nodes = self.identify_boundary_nodes()
 
+        # TODO: clean up this for loop into something smarter, maybe use 
+        # for key, value in boundary_nodes.items() 
         for key in boundary_nodes.keys(): 
 
             for node in boundary_nodes[key]: 
