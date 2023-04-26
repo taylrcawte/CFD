@@ -1,5 +1,5 @@
 import numpy as np 
-from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_internal_a_p
+from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_internal_a_p, calculate_internal_s_p, calculate_internal_s_u
 
 class HeatTransfer1D(object): 
 
@@ -30,13 +30,12 @@ class HeatTransfer1D(object):
         # do the common values first i.e. all internal nodes
         # TODO: can maybe turn the things used to calculate a_w, a_e, etc. into functions
         a_w = calculate_internal_a_w(self.area, self.k, self.dx)
-        print(f'aw{a_w}')
         a_e = calculate_internal_a_e(self.area, self.k, self.dx)
         a_p = calculate_internal_a_p(a_w, a_e) 
         # since we are assuming source free heat then we know that the internal 
         # nodes have no heat generation term to them 
-        s_p = 0
-        s_u = 0 
+        s_p = calculate_internal_s_p()
+        s_u = calculate_internal_s_u() 
         
         # fill arrays with the values 
         self.a_w.fill(a_w)
