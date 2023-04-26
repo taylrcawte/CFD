@@ -1,4 +1,5 @@
 import numpy as np 
+from functions import calculate_a_w
 
 class HeatTransfer1D(object): 
 
@@ -26,8 +27,10 @@ class HeatTransfer1D(object):
 
     def calculate_coefficients(self) -> None:
         
-        # do the common values first i.e. all internal nodes 
-        a_w = self.area*(self.k/self.dx)
+        # do the common values first i.e. all internal nodes
+        # TODO: can maybe turn the things used to calculate a_w, a_e, etc. into functions
+        a_w = calculate_a_w(self.area, self.k, self.dx)
+        print(f'aw{a_w}')
         a_e = self.area*(self.k/self.dx)
         a_p = a_w + a_e 
         # since we are assuming source free heat then we know that the internal 
@@ -91,4 +94,9 @@ class HeatTransfer1D(object):
         print(matrix_A)
 
         temp = np.linalg.solve(a=matrix_A, b=self.s_u)
-        print(temp) 
+        print(temp)
+
+class calculate_internal_a_coef(object):
+
+    def __inti__(self): -> None:
+        pass 
