@@ -1,5 +1,5 @@
 import numpy as np 
-from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_internal_a_p, calculate_internal_s_p, calculate_internal_s_u
+from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_internal_a_p, calculate_internal_s_p, calculate_internal_s_u, calculate_boundary_s_p, calculate_boundary_s_u
 
 class HeatTransfer1D(object): 
 
@@ -56,21 +56,21 @@ class HeatTransfer1D(object):
                 if key == 'west_boundary':
 
                     # source term 
-                    self.s_u[node] = (2*self.k*self.area*self.bc1) / self.dx
-                    self.s_p[node] = ((-2*self.k*self.area)/self.dx) 
+                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc1, condition='case1')
+                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.dx, condition='case1')
                     # coefs 
                     self.a_w[node] = 0
-                    self.a_e[node] = a_e
+                    # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
                     self.a_p[node] = self.a_w[node] + self.a_e[node] - self.s_p[node]
 
                 else: 
 
                     # source term 
-                    self.s_u[node] = (2*self.k*self.area*self.bc2) / self.dx
-                    self.s_p[node] = ((-2*self.k*self.area)/self.dx) 
+                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc2, condition='case1')
+                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.dx, condition='case1')
                     # coefs 
                     self.a_e[node] = 0
-                    self.a_w[node] = a_w
+                    # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
                     self.a_p[node] = self.a_w[node] + self.a_e[node] - self.s_p[node]
         
         # calculate a_p 
