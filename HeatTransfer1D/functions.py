@@ -20,7 +20,7 @@ def calculate_internal_a_p(a1, a2, s_p, condition):
         coef = a1 + a2
         return coef 
     elif condition == 'case2': 
-        coef = a1 + a2 + s_p
+        coef = a1 + a2 - s_p
         return coef
     else: 
         raise ValueError('Please enter a valid condition') 
