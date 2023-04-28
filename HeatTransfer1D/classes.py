@@ -97,10 +97,9 @@ class HeatTransfer1D(object):
         # temp = np.linalg.solve(a=matrix_A, b=self.s_u)
         # print(temp)
         solver = Tdma(self.a_w, self.a_p, self.a_e, self.s_u)
-        temp = solver.solve() 
+        self.temp = solver.solve() 
 
-
-        return temp
+        return self.temp
 
 class Tdma(object): 
 
