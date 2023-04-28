@@ -86,13 +86,51 @@ class HeatTransfer1D(object):
     def solve(self) -> None:
 
         # create tridiag matrix 
-        matrix_a_w = np.diag(self.a_w[1:], k=1)
-        matrix_a_e = np.diag(self.a_e[:-1], k=-1)
-        matrix_a_p = np.diag(self.a_p, k=0)
-        matrix_A = -1*matrix_a_e + matrix_a_p + -1*matrix_a_w
+        # matrix_a_w = np.diag(self.a_w[1:], k=1)
+        # matrix_a_e = np.diag(self.a_e[:-1], k=-1)
+        # matrix_a_p = np.diag(self.a_p, k=0)
+        # matrix_A = -1*matrix_a_e + matrix_a_p + -1*matrix_a_w
 
-        print(matrix_A)
+        # print(matrix_A)
 
-        temp = np.linalg.solve(a=matrix_A, b=self.s_u)
-        print(temp)
+        # temp = np.linalg.solve(a=matrix_A, b=self.s_u)
+        # print(temp)
+        solver = Tdma(self.a_w, self.a_p, self.a_e, self.s_u)
+        temp = solver.solve() 
 
+
+        return temp
+
+class Tdma(object): 
+
+    def __init__(self, A, B, C, D):
+
+        self.A = -1*A 
+        self.B = B 
+        self.C = -1*C 
+        self.D = D
+
+        if not (len(self.A) == len(self.B) == len(self.C) == len(self.D)): 
+            raise ValueError(f'All vectors must be same length,\
+                             provided dimensions {len(self.A), len(self.B), len(self.C), len(self.D)}')
+        else:
+            self.Dim = len(self.A)
+            self.X = np.empty(self.Dim)
+
+    def solve(self):
+
+        for i in range(1, self.Dim, 1): 
+            print(i)
+            w = self.A[i] / self.B[i-1]
+            self.B[i] = self.B[i] - w*self.C[i-1]
+            self.D[i] = self.D[i] - w*self.D[i-1]
+
+        self.X[self.Dim-1] = self.D[self.Dim-1] / self.B[self.Dim-1]
+
+        for i in range(self.Dim-2, -1, -1):
+            print(i)
+            self.X[i] = (self.D[i]-self.C[i]*self.X[i+1]) / self.B[i]
+
+        print(self.X) 
+
+        return self.X
