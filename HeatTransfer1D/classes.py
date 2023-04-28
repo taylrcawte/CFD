@@ -3,7 +3,7 @@ from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_
 
 class HeatTransfer1D(object): 
 
-    def __init__(self, x_nodes, length, k, q, area, bc1, bc2) -> None:
+    def __init__(self, x_nodes, length, k, q, area, bc1, bc2, hp, T_inf) -> None:
         
         self.x_nodes = x_nodes
         self.length = length  # meters
@@ -11,7 +11,10 @@ class HeatTransfer1D(object):
         self.area = area  # m^2
         self.bc1 = bc1  # K 
         self.bc2 = bc2  # K
-        self.q = q
+        self.q = q  # heat energy transfer 
+        self.hp = hp  # perimiter of fin cross section mutliplied by convective heat transfer coefficient
+        self.T_inf = T_inf
+
         # init variables 
         self.a_p = np.empty(self.x_nodes, dtype=float) 
         self.a_e = np.empty(self.x_nodes, dtype=float)
@@ -28,14 +31,14 @@ class HeatTransfer1D(object):
     def calculate_coefficients(self) -> None:
         
         # do the common values first i.e. all internal nodes
-        a_w = calculate_internal_a_w(self.area, self.k, self.dx, condition='case1')
-        a_e = calculate_internal_a_e(self.area, self.k, self.dx, condition='case1')
-        s_p = calculate_internal_s_p(condition='case1')
+        a_w = calculate_internal_a_w(self.area, self.k, self.dx)
+        a_e = calculate_internal_a_e(self.area, self.k, self.dx)
+        s_p = calculate_internal_s_p(self.hp, self.dx)
 
         # since we are assuming source free heat then we know that the internal 
         # nodes have no heat generation term to them 
-        s_u = calculate_internal_s_u(self.area, self.dx, self.q, condition='case2') 
-        a_p = calculate_internal_a_p(a_w, a_e, s_p, condition='case2') 
+        s_u = calculate_internal_s_u(self.area, self.dx, self.q, self.hp, self.T_inf) 
+        a_p = calculate_internal_a_p(a_w, a_e, s_p) 
 
         # fill arrays with the values 
         self.a_w.fill(a_w)
@@ -57,9 +60,9 @@ class HeatTransfer1D(object):
                 if key == 'west_boundary':
 
                     # source term 
-                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc1, q=self.q, condition='case2')
-                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.dx, condition='case1')
-                    # coefs 
+                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc1, q=self.q, T_inf=self.T_inf, hp=self.hp)
+                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
+                    # coefs
                     self.a_w[node] = 0
                     # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
                     self.a_p[node] = self.a_w[node] + self.a_e[node] - self.s_p[node]
@@ -67,8 +70,8 @@ class HeatTransfer1D(object):
                 else: 
 
                     # source term 
-                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc2, q=self.q, condition='case2')
-                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.dx, condition='case1')
+                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc2, q=self.q, T_inf=self.T_inf, hp=self.hp)
+                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
                     # coefs 
                     self.a_e[node] = 0
                     # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
@@ -120,7 +123,6 @@ class Tdma(object):
     def solve(self):
 
         for i in range(1, self.Dim, 1): 
-            print(i)
             w = self.A[i] / self.B[i-1]
             self.B[i] = self.B[i] - w*self.C[i-1]
             self.D[i] = self.D[i] - w*self.D[i-1]
@@ -128,7 +130,6 @@ class Tdma(object):
         self.X[self.Dim-1] = self.D[self.Dim-1] / self.B[self.Dim-1]
 
         for i in range(self.Dim-2, -1, -1):
-            print(i)
             self.X[i] = (self.D[i]-self.C[i]*self.X[i+1]) / self.B[i]
 
         print(self.X) 

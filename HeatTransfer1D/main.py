@@ -12,7 +12,9 @@ def main():
         area=1, 
         bc1=100, 
         bc2=200,
-        q=1000E3
+        T_inf = 0
+        q=1000E3, 
+        hp=0 
         )
     sim.calculate_coefficients()
     temp = sim.solve() 
