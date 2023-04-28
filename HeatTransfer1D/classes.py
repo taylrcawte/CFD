@@ -3,7 +3,7 @@ from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_
 
 class HeatTransfer1D(object): 
 
-    def __init__(self, x_nodes, length, k, area, bc1, bc2) -> None:
+    def __init__(self, x_nodes, length, k, q, area, bc1, bc2) -> None:
         
         self.x_nodes = x_nodes
         self.length = length  # meters
@@ -11,7 +11,7 @@ class HeatTransfer1D(object):
         self.area = area  # m^2
         self.bc1 = bc1  # K 
         self.bc2 = bc2  # K
-
+        self.q = q
         # init variables 
         self.a_p = np.empty(self.x_nodes, dtype=float) 
         self.a_e = np.empty(self.x_nodes, dtype=float)
@@ -30,12 +30,13 @@ class HeatTransfer1D(object):
         # do the common values first i.e. all internal nodes
         a_w = calculate_internal_a_w(self.area, self.k, self.dx, condition='case1')
         a_e = calculate_internal_a_e(self.area, self.k, self.dx, condition='case1')
-        a_p = calculate_internal_a_p(a_w, a_e, condition='case1') 
+        s_p = calculate_internal_s_p(condition='case1')
+
         # since we are assuming source free heat then we know that the internal 
         # nodes have no heat generation term to them 
-        s_p = calculate_internal_s_p(condition='case1')
-        s_u = calculate_internal_s_u(condition='case1') 
-        
+        s_u = calculate_internal_s_u(self.area, self.dx, self.q, condition='case2') 
+        a_p = calculate_internal_a_p(a_w, a_e, s_p, condition='case2') 
+
         # fill arrays with the values 
         self.a_w.fill(a_w)
         self.a_e.fill(a_e)
@@ -56,7 +57,7 @@ class HeatTransfer1D(object):
                 if key == 'west_boundary':
 
                     # source term 
-                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc1, condition='case1')
+                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc1, q=self.q, condition='case2')
                     self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.dx, condition='case1')
                     # coefs 
                     self.a_w[node] = 0
@@ -66,7 +67,7 @@ class HeatTransfer1D(object):
                 else: 
 
                     # source term 
-                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc2, condition='case1')
+                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc2, q=self.q, condition='case2')
                     self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.dx, condition='case1')
                     # coefs 
                     self.a_e[node] = 0
