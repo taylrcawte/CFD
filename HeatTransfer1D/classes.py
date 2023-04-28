@@ -115,7 +115,7 @@ class Tdma(object):
                              provided dimensions {len(self.A), len(self.B), len(self.C), len(self.D)}')
         else:
             self.Dim = len(self.A)
-            self.X = np.empty(self.Dim)
+            self.X = np.empty(self.Dim, dtype=float)
 
     def solve(self):
 
