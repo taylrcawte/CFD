@@ -6,7 +6,7 @@ import numpy as np
 def main(): 
 
     sim = HeatTransfer1D(
-        x_nodes=5, 
+        x_nodes=5000, 
         length=0.02, 
         k=0.5,
         area=1, 
