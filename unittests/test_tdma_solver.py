@@ -1,6 +1,6 @@
 import unittest
 import numpy as np 
-from classes import Tdma
+from HeatTransfer1D.classes import Tdma
 
 class Test(unittest.TestCase):
     """
