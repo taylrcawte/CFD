@@ -7,14 +7,15 @@ def main():
 
     sim = HeatTransfer1D(
         x_nodes=5000, 
-        length=0.02, 
-        k=0.5,
-        area=1, 
+        length=1, 
+        k=22407.695572217,
+        area=7.069E-6, 
         bc1=100, 
-        bc2=200,
-        T_inf = 0
-        q=1000E3, 
-        hp=0 
+        bc2=20,
+        T_inf=20,
+        q=1000E6, 
+        h=60,
+        p=0.066 
         )
     sim.calculate_coefficients()
     temp = sim.solve() 

@@ -3,7 +3,7 @@ from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_
 
 class HeatTransfer1D(object): 
 
-    def __init__(self, x_nodes, length, k, q, area, bc1, bc2, hp, T_inf) -> None:
+    def __init__(self, x_nodes, length, k, q, area, bc1, bc2, h, p, T_inf) -> None:
         
         self.x_nodes = x_nodes
         self.length = length  # meters
@@ -12,8 +12,11 @@ class HeatTransfer1D(object):
         self.bc1 = bc1  # K 
         self.bc2 = bc2  # K
         self.q = q  # heat energy transfer 
-        self.hp = hp  # perimiter of fin cross section mutliplied by convective heat transfer coefficient
         self.T_inf = T_inf
+        self.h = h
+        self.p = p 
+
+        self.hp = self.h*self.p  # need the h and p to calculate hp here, wont use n2 
 
         # init variables 
         self.a_p = np.empty(self.x_nodes, dtype=float) 
