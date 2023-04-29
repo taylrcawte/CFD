@@ -6,16 +6,16 @@ import numpy as np
 def main(): 
 
     sim = HeatTransfer1D(
-        x_nodes=5000, 
-        length=1, 
-        k=22407.695572217,
-        area=7.069E-6, 
+        x_nodes=5, 
+        length=0.5, 
+        k=1000,
+        area=10E-3, 
         bc1=100, 
-        bc2=20,
-        T_inf=20,
-        q=1000E6, 
-        h=60,
-        p=0.066 
+        bc2=500,
+        T_inf=0,
+        q=0, 
+        h=0,
+        p=0 
         )
     sim.calculate_coefficients()
     temp = sim.solve() 

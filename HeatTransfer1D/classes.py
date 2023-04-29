@@ -1,4 +1,6 @@
-import numpy as np 
+import numpy as np
+import sys 
+sys.path.insert(0, '/home/taylr/code_dir/CFD/HeatTransfer1D/') 
 from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_internal_a_p, calculate_internal_s_p, calculate_internal_s_u, calculate_boundary_s_p, calculate_boundary_s_u
 
 class HeatTransfer1D(object): 
@@ -111,9 +113,9 @@ class Tdma(object):
 
     def __init__(self, A, B, C, D):
 
-        self.A = -1*A 
+        self.A = A 
         self.B = B 
-        self.C = -1*C 
+        self.C = C 
         self.D = D
 
         if not (len(self.A) == len(self.B) == len(self.C) == len(self.D)): 
