@@ -104,7 +104,8 @@ class HeatTransfer1D(object):
 
         # temp = np.linalg.solve(a=matrix_A, b=self.s_u)
         # print(temp)
-        solver = Tdma(self.a_w, self.a_p, self.a_e, self.s_u)
+        # need to multiply ae and aw coefficients by -1 because they are on opposite sides of the EQN 
+        solver = Tdma(-1*self.a_w, self.a_p, -1*self.a_e, self.s_u)
         self.temp = solver.solve() 
 
         return self.temp
