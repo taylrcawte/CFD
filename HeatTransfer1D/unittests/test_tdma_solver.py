@@ -31,3 +31,6 @@ class Test(unittest.TestCase):
 
         if gt != pr: 
             raise ValueError(f'ground truth and tdma solved linalg system should be equivalent, results were {gt} and {pr}')
+        
+if __name__ == "__main__": 
+    unittest.main()
