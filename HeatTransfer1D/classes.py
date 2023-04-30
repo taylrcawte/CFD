@@ -153,7 +153,7 @@ class HeatTransfer2D(object):
             
             grid.append(row)
 
-        return grid 
+        return np.array(grid) 
 
 
     def identify_boundary_nodes(self) -> dict:
@@ -168,6 +168,7 @@ class HeatTransfer2D(object):
         boundary_nodes['east_boundary'] = [self.ident_grid[i][-1] for i in range(1, self.y_nodes-1, 1)]
 
         return boundary_nodes
+    
     
     def calculate_coefficients(self) -> None:
 
@@ -238,7 +239,12 @@ class HeatTransfer2D(object):
 
     def sovle(self): 
         
-        for j in range(self.y_nodes):
+        for i in range(self.x_nodes):
+
+            nodes = self.ident_grid[:, i] 
+
+            alpha, beta, D, C = self.simplify_coefs(a_n, a_s, a_e, a_w, a_p, T_w, T_e, b) 
+
 
 
         solver = TDMA()
