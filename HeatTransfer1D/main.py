@@ -2,10 +2,6 @@ from classes import HeatTransfer1D, HeatTransfer2D
 import matplotlib.pyplot as plt 
 import numpy as np
 
-def one_d(): 
-
-    
-
 def main():
 
     sim = HeatTransfer1D(
