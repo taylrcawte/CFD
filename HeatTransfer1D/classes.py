@@ -103,15 +103,15 @@ class HeatTransfer1D(object):
 
 class HeatTransfer2D(object):
 
-    def __init__(self, x_nodes, y_nodes, x_length, y_length, k, q, area, bc_n, bc_s, bc_e, bc_w, h, p, T_inf) -> None:
+    def __init__(self, x_nodes, y_nodes, x_length, y_length, k, q, bc_n, bc_s, bc_e, bc_w, h, p, T_inf, thickness) -> None:
         
         self.x_nodes = x_nodes
         self.y_nodes = y_nodes 
         self.x_length = x_length  # meters
         self.y_length = y_length
         self.k = k  # W / m.K 
-        self.area = area  # m^2
-        self.bc_n = bc_n  # K 
+        # m^2
+        self.bc_n = bc_n  # K TODO: turn all boundary conditions into a class, collapse the q, tinf, h, p, and bc_temps into this class
         self.bc_s = bc_s  # K
         self.bc_e = bc_e
         self.bc_w = bc_w  
@@ -119,6 +119,7 @@ class HeatTransfer2D(object):
         self.T_inf = T_inf
         self.h = h
         self.p = p
+        self.thickness = thickness
  
         self.hp = self.h*self.p  # need the h and p to calculate hp here, wont use n2 
 
@@ -144,11 +145,11 @@ class HeatTransfer2D(object):
         count = 0 
         grid = []
         
-        for j in range(self.y_nodes):
+        for i in range(self.x_nodes):
 
             row = []
 
-            for i in range(self.x_nodes):
+            for j in range(self.y_nodes):
                 row.append(count)
                 count += 1
             
@@ -165,8 +166,8 @@ class HeatTransfer2D(object):
         boundary_nodes = {}
         boundary_nodes['south_boundary'] = self.ident_grid[0]
         boundary_nodes['north_boundary'] = self.ident_grid[-1]
-        boundary_nodes['west_boundary'] = [self.ident_grid[i][0] for i in range(1, self.y_nodes-1, 1)]
-        boundary_nodes['east_boundary'] = [self.ident_grid[i][-1] for i in range(1, self.y_nodes-1, 1)]
+        boundary_nodes['west_boundary'] = [self.ident_grid[i][0] for i in range(1, self.y_nodes, 1)]
+        boundary_nodes['east_boundary'] = [self.ident_grid[i][-1] for i in range(1, self.y_nodes, 1)]
 
         return boundary_nodes
     
@@ -176,12 +177,13 @@ class HeatTransfer2D(object):
         # TODO: i will need to create a sweep for the internal nodes too
         
         # do the common values first i.e. all internal nodes
-        a_w = calculate_internal_a_w(self.area, self.k, self.dx)
-        a_e = calculate_internal_a_e(self.area, self.k, self.dx)
-        a_n = calculate_internal_a_n(self.area, self.k, self.dx)
-        a_s = calculate_internal_a_s(self.area, self.k, self.dx)
+        a_w = calculate_internal_a_w(self.thickness*self.dx, self.k, self.dx)
+        a_e = calculate_internal_a_e(self.thickness*self.dx, self.k, self.dx)
+        a_n = calculate_internal_a_n(self.thickness*self.dy, self.k, self.dy)
+        a_s = calculate_internal_a_s(self.thickness*self.dy, self.k, self.dy)
         s_p = calculate_internal_s_p(self.hp, self.dx) 
-        s_u = calculate_internal_s_u(self.area, self.dx, self.q, self.hp, self.T_inf) 
+        # TODO; this will need to be changed, should probably just asign all coefficients iterating over the identity grid 
+        s_u = calculate_internal_s_u(self.thickness*self.dx, self.dx, self.q, self.hp, self.T_inf) 
         a_p = calculate_internal_a_p(a_w, a_e, s_p) 
 
         # fill arrays with the values 
@@ -204,49 +206,51 @@ class HeatTransfer2D(object):
             if key == 'north_boundary':
                 for node in boundary_nodes[key]: 
                     # source term 
-                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc_n, q=self.q, T_inf=self.T_inf, hp=self.hp)
-                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
+                    self.s_u[node] = calculate_boundary_s_u(k=self.k, dist=self.dy, bc=self.bc_n, q=self.q, T_inf=self.T_inf, hp=self.hp, area=self.dy*self.thickness)
+                    self.s_p[node] = calculate_boundary_s_p(k=self.k, hp=self.hp, dist=self.dy,  area=self.dy*self.thickness)
                     # coefs
-                    self.a_n[node] = 0
+                    self.a_n[node] = 0.0
                     # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
-                    self.a_p[node] = self.a_n[node] + self.a_s[node] - self.s_p[node]
+                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
             elif key == 'south_boundary': 
                 for node in boundary_nodes[key]: 
                     # source term 
-                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc_s, q=self.q, T_inf=self.T_inf, hp=self.hp)
-                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
+                    self.s_u[node] = calculate_boundary_s_u(k=self.k, dist=self.dy, bc=self.bc_s, q=self.q, T_inf=self.T_inf, hp=self.hp, area=self.dy*self.thickness)
+                    self.s_p[node] = calculate_boundary_s_p(k=self.k, hp=self.hp, dist=self.dy,  area=self.dy*self.thickness)
                     # coefs
-                    self.a_s[node] = 0
+                    self.a_s[node] = 0.0
                     # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] - self.s_p[node] 
+                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node] 
 
             elif key == 'west_boundary':
                 for node in boundary_nodes[key]: 
                         # source term 
-                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc_w, q=500, T_inf=self.T_inf, hp=self.hp)
-                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
+                    self.s_u[node] = calculate_boundary_s_u(k=self.k, dist=self.dx, bc=self.bc_w, q=500, T_inf=self.T_inf, hp=self.hp, area=self.dx*self.thickness)
+                    self.s_p[node] = calculate_boundary_s_p(k=self.k, hp=self.hp, dist=self.dx, area=self.dx*self.thickness)
                     # coefs
-                    self.a_w[node] = 0
+                    self.a_w[node] = 0.0
                     # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] - self.s_p[node]
+                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
             else: 
                 for node in boundary_nodes[key]: 
                         # source term 
-                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc_e, q=self.q, T_inf=self.T_inf, hp=self.hp)
-                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
+                    self.s_u[node] = calculate_boundary_s_u(k=self.k, dist=self.dx, bc=self.bc_e, q=self.q, T_inf=self.T_inf, hp=self.hp,  area=self.dx*self.thickness)
+                    self.s_p[node] = calculate_boundary_s_p(k=self.k, hp=self.hp, dist=self.dx, area=self.dx*self.thickness)
                     # coefs 
-                    self.a_e[node] = 0
+                    self.a_e[node] = 0.0
                     # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] - self.s_p[node]
+                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
         
         # calculate a_p 
         # TODO: change the logic here so that a_p gets calcualted at the very end using vector addition 
         # self.a_p = self.a_w + self.a_p + self.s_p
 
-        
+        print(f'a_w:{self.a_w}')        
         print(f'a_e:{self.a_e}')
+        print(f'a_n:{self.a_n}')
+        print(f'a_s:{self.a_s}')
         print(f'a_p:{self.a_p}')
         print(f's_p:{self.s_p}')
         print(f's_u:{self.s_u}')

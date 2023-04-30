@@ -29,20 +29,20 @@ def one_d():
 def two_d():
 
     sim = HeatTransfer2D(
-        x_nodes=5,
-        y_nodes=5,  
-        x_length=0.5, 
-        y_length=0.5, 
+        x_nodes=4,
+        y_nodes=3,  
+        x_length=0.4, 
+        y_length=0.3, 
         k=1000,
-        area=10E-3, 
         bc_n=100, 
-        bc_s=500,
+        bc_s=0,
         bc_e=0,
         bc_w=0,
         T_inf=0,
         q=0, 
         h=0,
         p=0,
+        thickness=0.01
     )
     sim.calculate_coefficients()
     temp = sim.solve() 
