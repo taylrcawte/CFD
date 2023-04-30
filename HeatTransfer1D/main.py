@@ -1,4 +1,4 @@
-from classes import HeatTransfer1D, HeatTransfer2D
+from classes import HeatTransfer1D
 import matplotlib.pyplot as plt 
 import numpy as np
 
@@ -6,13 +6,13 @@ def main():
 
     sim = HeatTransfer1D(
         x_nodes=5, 
-        length=0.5, 
-        k=1000,
-        area=10E-3, 
+        length=0.02, 
+        k=0.5,
+        area=1, 
         bc_w=100, 
-        bc_e=500,
+        bc_e=200,
         T_inf=0,
-        q=0, 
+        q=1000E3, 
         h=0,
         p=0 
         )
