@@ -43,12 +43,9 @@ def two_d():
         q=0, 
         h=0,
         p=0,
-        initial_guess=0
     )
-    sim.create_identity_grid()
-    sim.identify_boundary_nodes()
-    # sim.calculate_coefficients()
-    # temp = sim.solve() 
+    sim.calculate_coefficients()
+    temp = sim.solve() 
 
 
 def main(): 

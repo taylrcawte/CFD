@@ -130,7 +130,7 @@ class HeatTransfer2D(object):
         self.a_s = np.empty(self.x_nodes*self.y_nodes, dtype=float)
         self.s_p = np.empty(self.x_nodes*self.y_nodes, dtype=float)
         self.s_u = np.empty(self.x_nodes*self.y_nodes, dtype=float)
-        self.phi = np.empty(self.x_nodes, self.y_nodes, dtype=float)  # the temperature array 
+        self.phi = np.empty(self.x_nodes*self.y_nodes, dtype=float)  # the temperature array 
         self.dx = self.x_length / self.x_nodes
         self.dy = self.y_length / self.y_nodes
 
@@ -237,20 +237,28 @@ class HeatTransfer2D(object):
         print(f's_p:{self.s_p}')
         print(f's_u:{self.s_u}')
 
-    def sovle(self): 
+    def solve(self): 
         
-        for i in range(self.x_nodes):
-
-            nodes = self.ident_grid[:, i] 
-
-            alpha, beta, D, C = self.simplify_coefs(a_n, a_s, a_e, a_w, a_p, T_w, T_e, b) 
-
-
-
-        solver = TDMA()
-
+        # calculate the convergence after a full pass has created, iteratate the for loop with a while loop to meet convergence 
+        lines = [self.ident_grid[:, i] for i in range(self.x_nodes)]  # choose x nodes because we sweep W-E
+        passes = 0 
         
+        for i in range(len(lines)):
+            
+            bee = self.s_p[[lines[i]]] + self.s_u[[lines[i]]]
+            alpha = self.a_n[[lines[i]]]
+            beta = self.a_s[[lines[i]]]
+            dee = self.a_p[[lines[i]]]
+            cee = self.a_e[[lines[i]]]*self.phi[[lines[i+1]]]+self.a_w[lines[i]]*self.phi[lines[i-1]]+bee 
+            solver = Tdma(-1*alpha, beta, -1*dee, cee)
 
+            temp = solver.solve()
+            print(temp)
+
+            self.phi[nodes] = temp
+
+        passes += 1
+        print(f'Completed pass: {passes}')
 
 class Tdma(object): 
 
