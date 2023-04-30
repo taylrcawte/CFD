@@ -21,7 +21,7 @@ def calculate_internal_a_p(a1, a2, s_p):
     coef = a1 + a2 - s_p
     return coef
 
-def calculate_internal_s_u(area, ddxist, q, hp, T_inf): 
+def calculate_internal_s_u(area, dx, q, hp, T_inf): 
     return q*area*dx + hp*dx*T_inf   
 
 def calculate_internal_s_p(hp, dx):
