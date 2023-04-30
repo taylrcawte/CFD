@@ -4,10 +4,6 @@ import numpy as np
 
 def one_d(): 
 
-    
-
-def main():
-
     sim = HeatTransfer1D(
         x_nodes=5, 
         length=0.5, 
@@ -28,7 +24,33 @@ def main():
     plt.plot(np.linspace(0, sim.length, sim.x_nodes), temp)
     plt.xlabel('Distance [m]')
     plt.ylabel('Temperature [C]')
-    plt.show() 
+    plt.show()
+
+def two_d():
+
+    sim = HeatTransfer2D(
+        x_nodes=4,
+        y_nodes=3,  
+        x_length=0.4, 
+        y_length=0.3, 
+        k=1000,
+        bc_n=100, 
+        bc_s=0,
+        bc_e=0,
+        bc_w=0,
+        T_inf=0,
+        q=0, 
+        h=0,
+        p=0,
+        thickness=0.01
+    )
+    sim.calculate_coefficients()
+    temp = sim.solve() 
+
+
+def main(): 
+    # one_d()
+    two_d()
 
 if __name__ == '__main__': 
     main()
