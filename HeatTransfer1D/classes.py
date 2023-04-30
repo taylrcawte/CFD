@@ -130,7 +130,8 @@ class HeatTransfer2D(object):
         self.a_s = np.empty(self.x_nodes*self.y_nodes, dtype=float)
         self.s_p = np.empty(self.x_nodes*self.y_nodes, dtype=float)
         self.s_u = np.empty(self.x_nodes*self.y_nodes, dtype=float)
-        self.phi = np.empty(self.x_nodes*self.y_nodes, dtype=float)  # the temperature array 
+        self.phi = np.empty(self.x_nodes*self.y_nodes, dtype=float)
+        self.phi.fill(0)  # the temperature array 
         self.dx = self.x_length / self.x_nodes
         self.dy = self.y_length / self.y_nodes
 
@@ -199,27 +200,40 @@ class HeatTransfer2D(object):
         # TODO: clean up this for loop into something smarter, maybe use 
         # for key, value in boundary_nodes.items() 
         for key in boundary_nodes.keys(): 
-
-            for node in boundary_nodes[key]: 
-                if key == 'north_boundary': 
-                    pass
-
-                elif key == 'south_boundary': 
-                    pass 
-
-                elif key == 'west_boundary':
-
+                
+            if key == 'north_boundary':
+                for node in boundary_nodes[key]: 
                     # source term 
-                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc_w, q=self.q, T_inf=self.T_inf, hp=self.hp)
+                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc_n, q=self.q, T_inf=self.T_inf, hp=self.hp)
+                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
+                    # coefs
+                    self.a_n[node] = 0
+                    # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
+                    self.a_p[node] = self.a_n[node] + self.a_s[node] - self.s_p[node]
+
+            elif key == 'south_boundary': 
+                for node in boundary_nodes[key]: 
+                    # source term 
+                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc_s, q=self.q, T_inf=self.T_inf, hp=self.hp)
+                    self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
+                    # coefs
+                    self.a_s[node] = 0
+                    # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
+                    self.a_p[node] = self.a_w[node] + self.a_e[node] - self.s_p[node] 
+
+            elif key == 'west_boundary':
+                for node in boundary_nodes[key]: 
+                        # source term 
+                    self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc_w, q=500, T_inf=self.T_inf, hp=self.hp)
                     self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
                     # coefs
                     self.a_w[node] = 0
                     # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
                     self.a_p[node] = self.a_w[node] + self.a_e[node] - self.s_p[node]
 
-                else: 
-
-                    # source term 
+            else: 
+                for node in boundary_nodes[key]: 
+                        # source term 
                     self.s_u[node] = calculate_boundary_s_u(self.k, self.area, self.dx, self.bc_e, q=self.q, T_inf=self.T_inf, hp=self.hp)
                     self.s_p[node] = calculate_boundary_s_p(self.k, self.area, self.hp, self.dx)
                     # coefs 
@@ -231,7 +245,7 @@ class HeatTransfer2D(object):
         # TODO: change the logic here so that a_p gets calcualted at the very end using vector addition 
         # self.a_p = self.a_w + self.a_p + self.s_p
 
-        print(f'a_w:{self.a_w}')
+        
         print(f'a_e:{self.a_e}')
         print(f'a_p:{self.a_p}')
         print(f's_p:{self.s_p}')
@@ -243,19 +257,19 @@ class HeatTransfer2D(object):
         lines = [self.ident_grid[:, i] for i in range(self.x_nodes)]  # choose x nodes because we sweep W-E
         passes = 0 
         
-        for i in range(len(lines)):
+        for i in range(len(lines)-1):
             
-            bee = self.s_p[[lines[i]]] + self.s_u[[lines[i]]]
-            alpha = self.a_n[[lines[i]]]
-            beta = self.a_s[[lines[i]]]
-            dee = self.a_p[[lines[i]]]
-            cee = self.a_e[[lines[i]]]*self.phi[[lines[i+1]]]+self.a_w[lines[i]]*self.phi[lines[i-1]]+bee 
+            bee = self.s_p[lines[i]] + self.s_u[lines[i]]
+            alpha = self.a_n[lines[i]]
+            beta = self.a_s[lines[i]]
+            dee = self.a_p[lines[i]]
+            cee = self.a_e[lines[i]]*self.phi[lines[i+1]]+self.a_w[lines[i]]*self.phi[lines[i-1]]+bee 
             solver = Tdma(-1*alpha, beta, -1*dee, cee)
 
             temp = solver.solve()
             print(temp)
 
-            self.phi[nodes] = temp
+            self.phi[lines[i]] = temp
 
         passes += 1
         print(f'Completed pass: {passes}')
