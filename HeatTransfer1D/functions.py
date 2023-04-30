@@ -1,4 +1,6 @@
+########################################################################################
 # internal node coefficient and generation term calculations 
+########################################################################################
 def calculate_internal_a_coef(area, k, dx): 
     coef = (area*k)/dx
     return coef 
@@ -7,6 +9,12 @@ def calculate_internal_a_w(area, k, dx):
     return calculate_internal_a_coef(area, k, dx) 
 
 def calculate_internal_a_e(area, k, dx):
+    return calculate_internal_a_coef(area, k, dx)
+
+def calculate_internal_a_n(area, k, dx):
+    return calculate_internal_a_coef(area, k, dx) 
+
+def calculate_internal_a_s(area, k, dx):
     return calculate_internal_a_coef(area, k, dx)
 
 def calculate_internal_a_p(a1, a2, s_p): 
@@ -18,6 +26,9 @@ def calculate_internal_s_u(area, dx, q, hp, T_inf):
 
 def calculate_internal_s_p(hp, dx):
     return 0 - hp*dx
+########################################################################################
+# boundary node coefficient and generatoin term calculations 
+########################################################################################
 
 def calculate_boundary_s_u(k, area, dx, bc, T_inf, hp, q): 
     coef = (q*area*dx) + ((2*k*area*bc) / dx) + (hp*dx*T_inf)
