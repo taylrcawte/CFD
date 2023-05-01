@@ -53,11 +53,11 @@ class HeatTransfer2D(object):
         count = 0 
         grid = []
         
-        for j in range(self.y_nodes):
+        for i in range(self.x_nodes):
 
             col = []
 
-            for i in range(self.x_nodes):
+            for j in range(self.y_nodes):
                 col.append(count)
                 count += 1
             
@@ -74,14 +74,14 @@ class HeatTransfer2D(object):
         boundary_nodes = {}
         # boundary_nodes['south_boundary'] = self.ident_grid[0]
         # boundary_nodes['north_boundary'] = self.ident_grid[-1]
-        boundary_nodes['south_boundary'] = [self.ident_grid[0][i] for i in range(1, self.x_nodes-1, 1)]
-        boundary_nodes['north_boundary'] = [self.ident_grid[-1][i] for i in range(1, self.x_nodes-1, 1)]
-        boundary_nodes['west_boundary'] = [self.ident_grid[i][0] for i in range(1, self.y_nodes-1, 1)]
-        boundary_nodes['east_boundary'] = [self.ident_grid[i][-1] for i in range(1, self.y_nodes-1, 1)]
-        boundary_nodes['southeast_boundary'] = [self.ident_grid[0][-1]]
+        boundary_nodes['south_boundary'] = [self.ident_grid[i][0] for i in range(1, self.x_nodes-1, 1)]
+        boundary_nodes['north_boundary'] = [self.ident_grid[i][-1] for i in range(1, self.x_nodes-1, 1)]
+        boundary_nodes['west_boundary'] = [self.ident_grid[0][i] for i in range(1, self.y_nodes-1, 1)]
+        boundary_nodes['east_boundary'] = [self.ident_grid[-1][i] for i in range(1, self.y_nodes-1, 1)]
+        boundary_nodes['southeast_boundary'] = [self.ident_grid[-1][0]]
         boundary_nodes['northeast_boundary'] = [self.ident_grid[-1][-1]] 
         boundary_nodes['southwest_boundary'] = [self.ident_grid[0][0]] 
-        boundary_nodes['northwest_boundary'] = [self.ident_grid[-1][0]] 
+        boundary_nodes['northwest_boundary'] = [self.ident_grid[0][-1]] 
 
         # now remove the intersected boundary nodes from their original boundar
 
@@ -221,34 +221,33 @@ class HeatTransfer2D(object):
         
         # calculate the convergence after a full pass has created, iteratate the for loop with a while loop to meet convergence 
         # TODO: need to fix this part, there is something wrong with the recalc of the node coeffs and is resulting in 3x3 output instead of 1x12 or.w.e
-        lines = [self.ident_grid[:, i] for i in range(self.x_nodes)]  # choose x nodes because we sweep W-E
         passes = 0 
         
         error = 1
 
         while error >= 0.05 and passes < 100: 
 
-            for i in range(len(lines)):
+            for i in range(len(self.ident_grid)):
                 
-                bee = self.s_u[lines[i]]
-                alpha = self.a_n[lines[i]]
-                beta = self.a_s[lines[i]]
-                dee = self.a_p[lines[i]]
+                bee = self.s_u[self.ident_grid[i]]
+                alpha = self.a_n[self.ident_grid[i]]
+                beta = self.a_s[self.ident_grid[i]]
+                dee = self.a_p[self.ident_grid[i]]
 
                 ##
                 if i == 0: 
-                    ay = np.multiply(self.a_e[lines[i]], self.phi[lines[i+1]])
+                    ay = np.multiply(self.a_e[self.ident_grid[i]], self.phi[self.ident_grid[i+1]])
                     bay = 0 
-                elif i == len(lines)-1: 
+                elif i == len(self.ident_grid)-1: 
                     ay = 0 
-                    bay = np.multiply(self.a_w[lines[i]], self.phi[lines[i-1]])
+                    bay = np.multiply(self.a_w[self.ident_grid[i]], self.phi[self.ident_grid[i-1]])
                 else: 
-                    ay = np.multiply(self.a_e[lines[i]], self.phi[lines[i+1]])
-                    bay = np.multiply(self.a_w[lines[i]], self.phi[lines[i-1]])
+                    ay = np.multiply(self.a_e[self.ident_grid[i]], self.phi[self.ident_grid[i+1]])
+                    bay = np.multiply(self.a_w[self.ident_grid[i]], self.phi[self.ident_grid[i-1]])
 
 
                 cee = ay + bay + bee
-                print(f'lines:{lines[i]}')
+                print(f'lines:{self.ident_grid[i]}')
                 print(f'alpha:{alpha}')
                 print(f'beta:{beta}')
                 print(f'cee:{cee}')
@@ -261,7 +260,7 @@ class HeatTransfer2D(object):
                 # temp = solver.solve()
                 print(temp)
 
-                self.phi[lines[i]] = temp
+                self.phi[self.ident_grid[i]] = temp
                 print(self.phi)
 
             passes += 1

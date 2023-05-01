@@ -58,8 +58,7 @@ def tdma(A, B, C, D):
                             provided dimensions {len(A), len(B), len(C), len(D)}')
     else:
         Dim = len(A)
-        phi = np.empty(Dim, dtype=float)
-        phi = phi.tolist()
+        phi = np.empty(Dim)
 
     for i in range(0, Dim, 1):
         w = A[i] / B[i-1]
