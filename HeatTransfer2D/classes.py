@@ -223,6 +223,7 @@ class HeatTransfer2D(object):
             beta = self.a_s[lines[i]]
             dee = self.a_p[lines[i]]
             cee = self.a_e[lines[i]]*self.phi[lines[i+1]]+self.a_w[lines[i]]*self.phi[lines[i-1]]+bee 
+            print('c', cee)
             solver = Tdma(-1*alpha, dee, -1*beta, cee)
 
             temp = solver.solve()
