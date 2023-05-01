@@ -212,17 +212,18 @@ class HeatTransfer2D(object):
     def solve(self): 
         
         # calculate the convergence after a full pass has created, iteratate the for loop with a while loop to meet convergence 
+        # TODO: need to fix this part, there is something wrong with the recalc of the node coeffs and is resulting in 3x3 output instead of 1x12 or.w.e
         lines = [self.ident_grid[:, i] for i in range(self.x_nodes)]  # choose x nodes because we sweep W-E
         passes = 0 
         
         for i in range(len(lines)-1):
             
-            bee = self.s_p[lines[i]] + self.s_u[lines[i]]
+            bee = self.s_u[lines[i]]
             alpha = self.a_n[lines[i]]
             beta = self.a_s[lines[i]]
             dee = self.a_p[lines[i]]
             cee = self.a_e[lines[i]]*self.phi[lines[i+1]]+self.a_w[lines[i]]*self.phi[lines[i-1]]+bee 
-            solver = Tdma(-1*alpha, beta, -1*dee, cee)
+            solver = Tdma(-1*alpha, dee, -1*beta, cee)
 
             temp = solver.solve()
             print(temp)
