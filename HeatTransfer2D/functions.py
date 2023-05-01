@@ -51,7 +51,7 @@ def calculate_boundary_s_p(k, area, dist):
 # TODO: could make individual functions for each condition e.g. for cooling
 # 
 # TODO: solver function 
-def tdma(A, B, C, D): 
+def tdma_noncons(A, B, C, D): 
     # inputs must be lists for now 
     if not (len(A) == len(B) == len(C) == len(D)): 
         raise ValueError(f'All vectors must be same length,\
@@ -71,3 +71,4 @@ def tdma(A, B, C, D):
         phi[i] = (D[i]-C[i]*phi[i+1]) / B[i]
 
     return np.array(phi)
+
