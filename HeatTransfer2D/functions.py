@@ -59,7 +59,6 @@ def tdma(A, B, C, D):
     else:
         Dim = len(A)
         phi = np.empty(Dim, dtype=float)
-        phi.fill(0)
         phi = phi.tolist()
 
     for i in range(0, Dim, 1):
