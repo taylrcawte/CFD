@@ -4,6 +4,7 @@ import sys
 
 sys.path.insert(0, '/home/taylr/code_dir/CFD/')
 from HeatTransfer1D.classes import Tdma
+from HeatTransfer2D.functions import tdma
 
 class Test(unittest.TestCase):
     """
@@ -25,7 +26,7 @@ class Test(unittest.TestCase):
 
         self.tdma = Tdma(self.a, self.b, self.c, self.d)
 
-    def test_1_compare_tdma_to_linalg(self): 
+    def test_1_compare_tdma_class_to_linalg(self): 
 
         gt = np.linalg.solve(self.coef_matrix, self.d) 
 
@@ -35,6 +36,17 @@ class Test(unittest.TestCase):
             self.assertAlmostEqual(gt[i], pr[i])
 
         print(f'Test one passed, tdma solved {pr}, linalg solved {gt}')
+
+    def test_2_compare_tdma_func_to_linalg(self): 
+
+        gt = np.linalg.solve(self.coef_matrix, self.d)
+
+        pr = tdma(self.a, self.b, self.c, self.d)
+
+        for i in range(len(self.a)): 
+            self.assertAlmostEqual(gt[i], pr[i])
+
+        print(f'Test two passed, tdma solved {pr}, linalg solved {gt}')
         
 if __name__ == "__main__": 
     unittest.main()

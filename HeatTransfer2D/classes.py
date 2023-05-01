@@ -3,7 +3,8 @@ import sys
 sys.path.insert(0, '/home/taylr/code_dir/CFD/HeatTransfer2D/') 
 from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_internal_a_p, \
     calculate_internal_s_p, calculate_internal_s_u, calculate_boundary_s_p, calculate_boundary_s_u, \
-    calculate_internal_a_n, calculate_internal_a_s, const_flux_boundary, const_temp_boundary, insulated_boundary
+    calculate_internal_a_n, calculate_internal_a_s, const_flux_boundary, const_temp_boundary, insulated_boundary, \
+    tdma
 
 class HeatTransfer2D(object):
 
@@ -32,6 +33,13 @@ class HeatTransfer2D(object):
         self.s_p = np.empty(self.x_nodes*self.y_nodes, dtype=float)
         self.s_u = np.empty(self.x_nodes*self.y_nodes, dtype=float)
         self.phi = np.empty(self.x_nodes*self.y_nodes, dtype=float)
+        self.a_p.fill(0) 
+        self.a_e.fill(0)
+        self.a_w.fill(0)
+        self.a_n.fill(0)
+        self.a_s.fill(0)
+        self.s_p.fill(0)
+        self.s_u.fill(0)
         self.phi.fill(0)  # the temperature array 
         self.dx = self.x_length / self.x_nodes
         self.dy = self.y_length / self.y_nodes
@@ -66,14 +74,14 @@ class HeatTransfer2D(object):
         boundary_nodes = {}
         # boundary_nodes['south_boundary'] = self.ident_grid[0]
         # boundary_nodes['north_boundary'] = self.ident_grid[-1]
-        boundary_nodes['west_boundary'] = [self.ident_grid[0][i] for i in range(1, self.x_nodes-1, 1)]
-        boundary_nodes['east_boundary'] = [self.ident_grid[-1][i] for i in range(1, self.x_nodes-1, 1)]
-        boundary_nodes['south_boundary'] = [self.ident_grid[i][0] for i in range(1, self.y_nodes-1, 1)]
-        boundary_nodes['north_boundary'] = [self.ident_grid[i][-1] for i in range(1, self.y_nodes-1, 1)]
-        boundary_nodes['northwest_boundary'] = [self.ident_grid[0][-1]]
+        boundary_nodes['south_boundary'] = [self.ident_grid[0][i] for i in range(1, self.x_nodes-1, 1)]
+        boundary_nodes['north_boundary'] = [self.ident_grid[-1][i] for i in range(1, self.x_nodes-1, 1)]
+        boundary_nodes['west_boundary'] = [self.ident_grid[i][0] for i in range(1, self.y_nodes-1, 1)]
+        boundary_nodes['east_boundary'] = [self.ident_grid[i][-1] for i in range(1, self.y_nodes-1, 1)]
+        boundary_nodes['southeast_boundary'] = [self.ident_grid[0][-1]]
         boundary_nodes['northeast_boundary'] = [self.ident_grid[-1][-1]] 
         boundary_nodes['southwest_boundary'] = [self.ident_grid[0][0]] 
-        boundary_nodes['southeast_boundary'] = [self.ident_grid[-1][0]] 
+        boundary_nodes['northwest_boundary'] = [self.ident_grid[-1][0]] 
 
         # now remove the intersected boundary nodes from their original boundar
 
@@ -118,7 +126,7 @@ class HeatTransfer2D(object):
                     self.s_u[node] = const_temp_boundary(k=self.k, area=self.dy*self.thickness, bc=self.bc_n, dist=self.dy) 
                     self.s_p[node] = -1*const_temp_boundary(k=self.k, area=self.dy*self.thickness, bc=self.bc_n, dist=self.dy) / self.bc_n
                     # coefs
-                    self.a_n[node] = 0.0
+                    self.a_n[node] = 0
                     # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
                     self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
@@ -128,7 +136,7 @@ class HeatTransfer2D(object):
                     self.s_u[node] = insulated_boundary()
                     self.s_p[node] = insulated_boundary()
                     # coefs
-                    self.a_s[node] = 0.0
+                    self.a_s[node] = 0
                     # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
                     self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node] 
 
@@ -138,8 +146,8 @@ class HeatTransfer2D(object):
                     self.s_u[node] = const_flux_boundary(q=500E3, area=self.dx*self.thickness)
                     self.s_p[node] = insulated_boundary()
                     # coefs
-                    self.a_w[node] = 0.0
-                    # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
+                    self.a_w[node] = 0
+                    # self.a_e[node] = a_e  # emoved this because it's not a necessary operation as it was filled in last step 
                     self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
             elif key == 'east_boundary': 
@@ -148,7 +156,7 @@ class HeatTransfer2D(object):
                     self.s_u[node] = insulated_boundary()
                     self.s_p[node] = insulated_boundary()
                     # coefs 
-                    self.a_e[node] = 0.0
+                    self.a_e[node] = 0
                     # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
                     self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
@@ -158,8 +166,8 @@ class HeatTransfer2D(object):
                     self.s_u[node] = const_flux_boundary(q=500E3, area=self.dx*self.thickness) + (const_temp_boundary(self.k, self.dx, self.bc_n, self.dy)/self.bc_n)
                     self.s_p[node] = -1*const_temp_boundary(self.k, self.dx*self.thickness, self.bc_n, self.dx) / self.bc_n
                     # coefs 
-                    self.a_w[node] = 0.0
-                    self.a_n[node] = 0.0
+                    self.a_w[node] = 0
+                    self.a_n[node] = 0
                     # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
                     self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
@@ -169,8 +177,8 @@ class HeatTransfer2D(object):
                     self.s_u[node] = const_temp_boundary(self.k, self.dx*self.thickness, self.bc_n, self.dy)
                     self.s_p[node] = -1*const_temp_boundary(self.k, self.dx*self.thickness, self.bc_n, self.dy) / self.bc_n
                     # coefs 
-                    self.a_e[node] = 0.0
-                    self.a_n[node] = 0.0
+                    self.a_e[node] = 0
+                    self.a_n[node] = 0
                     # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
                     self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
@@ -180,8 +188,8 @@ class HeatTransfer2D(object):
                     self.s_u[node] = const_flux_boundary(500E3, self.dx*self.thickness)
                     self.s_p[node] = insulated_boundary()
                     # coefs 
-                    self.a_w[node] = 0.0
-                    self.a_s[node] = 0.0
+                    self.a_w[node] = 0
+                    self.a_s[node] = 0
                     # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
                     self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
@@ -190,8 +198,8 @@ class HeatTransfer2D(object):
                     self.s_u[node] = insulated_boundary()
                     self.s_p[node] = insulated_boundary()
                     # coefs 
-                    self.a_w[node] = 0.0
-                    self.a_s[node] = 0.0
+                    self.a_w[node] = 0
+                    self.a_s[node] = 0
                     # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
                     self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
@@ -216,50 +224,46 @@ class HeatTransfer2D(object):
         lines = [self.ident_grid[:, i] for i in range(self.x_nodes)]  # choose x nodes because we sweep W-E
         passes = 0 
         
-        for i in range(len(lines)-1):
-            
-            bee = self.s_u[lines[i]]
-            alpha = self.a_n[lines[i]]
-            beta = self.a_s[lines[i]]
-            dee = self.a_p[lines[i]]
-            cee = self.a_e[lines[i]]*self.phi[lines[i+1]]+self.a_w[lines[i]]*self.phi[lines[i-1]]+bee 
-            print('c', cee)
-            solver = Tdma(-1*alpha, dee, -1*beta, cee)
+        error = 1
 
-            temp = solver.solve()
-            print(temp)
+        while error >= 0.05 and passes < 100: 
 
-            self.phi[lines[i]] = temp
+            for i in range(len(lines)):
+                
+                bee = self.s_u[lines[i]]
+                alpha = self.a_n[lines[i]]
+                beta = self.a_s[lines[i]]
+                dee = self.a_p[lines[i]]
 
-        passes += 1
-        print(f'Completed pass: {passes}')
+                ##
+                if i == 0: 
+                    ay = np.multiply(self.a_e[lines[i]], self.phi[lines[i+1]])
+                    bay = 0 
+                elif i == len(lines)-1: 
+                    ay = 0 
+                    bay = np.multiply(self.a_w[lines[i]], self.phi[lines[i-1]])
+                else: 
+                    ay = np.multiply(self.a_e[lines[i]], self.phi[lines[i+1]])
+                    bay = np.multiply(self.a_w[lines[i]], self.phi[lines[i-1]])
 
-class Tdma(object): 
 
-    def __init__(self, A, B, C, D):
+                cee = ay + bay + bee
+                print(f'lines:{lines[i]}')
+                print(f'alpha:{alpha}')
+                print(f'beta:{beta}')
+                print(f'cee:{cee}')
+                print(f'ay:{ay}')
+                print(f'bay:{bay}')
+                print(f'bee:{bee}')
+                print(f'dee:{dee}')
+                temp = tdma((-1*alpha).tolist(), dee.tolist(), (-1*beta).tolist(), cee.tolist())
 
-        self.A = A 
-        self.B = B 
-        self.C = C 
-        self.D = D
+                # temp = solver.solve()
+                print(temp)
 
-        if not (len(self.A) == len(self.B) == len(self.C) == len(self.D)): 
-            raise ValueError(f'All vectors must be same length,\
-                             provided dimensions {len(self.A), len(self.B), len(self.C), len(self.D)}')
-        else:
-            self.Dim = len(self.A)
-            self.X = np.empty(self.Dim, dtype=float)
+                self.phi[lines[i]] = temp
 
-    def solve(self):
+            passes += 1
+            print(f'Completed pass: {passes}')
 
-        for i in range(1, self.Dim, 1): 
-            w = self.A[i] / self.B[i-1]
-            self.B[i] = self.B[i] - w*self.C[i-1]
-            self.D[i] = self.D[i] - w*self.D[i-1]
-
-        self.X[self.Dim-1] = self.D[self.Dim-1] / self.B[self.Dim-1]
-
-        for i in range(self.Dim-2, -1, -1):
-            self.X[i] = (self.D[i]-self.C[i]*self.X[i+1]) / self.B[i]
-
-        return self.X
+        print(self.phi)

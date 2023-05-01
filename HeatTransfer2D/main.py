@@ -5,10 +5,10 @@ import numpy as np
 def main(): 
 
     sim = HeatTransfer2D(
-        x_nodes=4,
-        y_nodes=3,  
-        x_length=0.4, 
-        y_length=0.3, 
+        x_nodes=3,
+        y_nodes=4,  
+        x_length=0.3, 
+        y_length=0.4, 
         k=1000,
         bc_n=100, 
         bc_s=0,  # i think these are technically the first guesses of the boundary temperatures ... 

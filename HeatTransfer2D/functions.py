@@ -1,3 +1,5 @@
+import numpy as np 
+
 ########################################################################################
 # internal node coefficient and generation term calculations 
 ########################################################################################
@@ -46,4 +48,28 @@ def insulated_boundary():
 def calculate_boundary_s_p(k, area, dist):  
     return (-2*k*area) / dist 
 
-# TODO: could make individual functions for each condition e.g. for cooling     
+# TODO: could make individual functions for each condition e.g. for cooling
+# 
+# TODO: solver function 
+def tdma(A, B, C, D): 
+    # inputs must be lists for now 
+    if not (len(A) == len(B) == len(C) == len(D)): 
+        raise ValueError(f'All vectors must be same length,\
+                            provided dimensions {len(A), len(B), len(C), len(D)}')
+    else:
+        Dim = len(A)
+        phi = np.empty(Dim, dtype=float)
+        phi.fill(0)
+        phi = phi.tolist()
+
+    for i in range(0, Dim, 1):
+        w = A[i] / B[i-1]
+        B[i] = B[i] - w*C[i-1]
+        D[i] = D[i] - w*D[i-1]
+
+    phi[Dim-1] = D[Dim-1] / B[Dim-1]
+
+    for i in range(Dim-2, -1, -1):
+        phi[i] = (D[i]-C[i]*phi[i+1]) / B[i]
+
+    return np.array(phi)
