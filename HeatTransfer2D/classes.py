@@ -88,10 +88,10 @@ class HeatTransfer2D(object):
         # TODO: i will need to create a sweep for the internal nodes too
         
         # do the common values first i.e. all internal nodes
-        a_w = calculate_internal_a_w(self.thickness*self.dx, self.k, self.dx)
-        a_e = calculate_internal_a_e(self.thickness*self.dx, self.k, self.dx)
-        a_n = calculate_internal_a_n(self.thickness*self.dy, self.k, self.dy)
-        a_s = calculate_internal_a_s(self.thickness*self.dy, self.k, self.dy)
+        a_w = calculate_internal_a_w(self.thickness*self.dy, self.k, self.dx)
+        a_e = calculate_internal_a_e(self.thickness*self.dy, self.k, self.dx)
+        a_n = calculate_internal_a_n(self.thickness*self.dx, self.k, self.dy)
+        a_s = calculate_internal_a_s(self.thickness*self.dx, self.k, self.dy)
         s_p = calculate_internal_s_p() 
         s_u = calculate_internal_s_u() 
         
@@ -232,7 +232,7 @@ class HeatTransfer2D(object):
                     bay = np.multiply(self.a_w[self.ident_grid[i]], self.phi[self.ident_grid[i-1]])
 
                 cee = ay + bay + bee
-                solver = Tdma((alpha).tolist(), dee.tolist(), (beta).tolist(), cee.tolist())
+                solver = TdmaNonCons(-1*alpha, dee, -1*beta, cee)
 
                 temp = solver.solve()
 
@@ -252,7 +252,7 @@ class HeatTransfer2D(object):
         plt.imshow(self.phi.reshape(self.x_nodes, self.y_nodes), cmap='hot', interpolation='nearest')
         plt.show()
 
-class Tdma(object): 
+class TdmaCons(object): 
 
     def __init__(self, C, B, A, D):
 
@@ -288,5 +288,36 @@ class Tdma(object):
 
         for i in range(self.Dim-2, -1, -1):
             self.X[i] = self.D_prime[i]+self.C_prime[i]*self.X[i+1]
+
+        return self.X
+
+
+class TdmaNonCons(object): 
+
+    def __init__(self, A, B, C, D):
+
+        self.A = A.copy() 
+        self.B = B.copy() 
+        self.C = C.copy() 
+        self.D = D.copy()
+
+        if not (len(self.A) == len(self.B) == len(self.C) == len(self.D)): 
+            raise ValueError(f'All vectors must be same length,\
+                             provided dimensions {len(self.A), len(self.B), len(self.C), len(self.D)}')
+        else:
+            self.Dim = len(self.A)
+            self.X = np.empty(self.Dim, dtype=float)
+
+    def solve(self):
+
+        for i in range(1, self.Dim, 1): 
+            w = self.A[i] / self.B[i-1]
+            self.B[i] = self.B[i] - w*self.C[i-1]
+            self.D[i] = self.D[i] - w*self.D[i-1]
+
+        self.X[self.Dim-1] = self.D[self.Dim-1] / self.B[self.Dim-1]
+
+        for i in range(self.Dim-2, -1, -1):
+            self.X[i] = (self.D[i]-self.C[i]*self.X[i+1]) / self.B[i]
 
         return self.X

@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, '/home/taylr/code_dir/CFD/')
 from HeatTransfer1D.classes import Tdma
-from HeatTransfer2D.functions import tdma
+from HeatTransfer2D.functions import tdma_noncons
 
 class Test(unittest.TestCase):
     """
@@ -41,7 +41,7 @@ class Test(unittest.TestCase):
 
         gt = np.linalg.solve(self.coef_matrix, self.d)
 
-        pr = tdma(self.a, self.b, self.c, self.d)
+        pr = tdma_noncons(self.a, self.b, self.c, self.d)
 
         for i in range(len(self.a)): 
             self.assertAlmostEqual(gt[i], pr[i])
