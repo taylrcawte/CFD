@@ -20,7 +20,9 @@ def main():
     # sim.create_identity_grid()
     # sim.identify_boundary_nodes()
     sim.calculate_coefficients()
-    temp = sim.solve() 
+    temp = sim.solve()
+    sim.visualize()
+    print(temp) 
 
 if __name__ == '__main__': 
     main()

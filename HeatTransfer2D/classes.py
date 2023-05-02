@@ -1,10 +1,10 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import sys 
 sys.path.insert(0, '/home/taylr/code_dir/CFD/HeatTransfer2D/') 
 from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_internal_a_p, \
-    calculate_internal_s_p, calculate_internal_s_u, calculate_boundary_s_p, calculate_boundary_s_u, \
-    calculate_internal_a_n, calculate_internal_a_s, const_flux_boundary, const_temp_boundary, insulated_boundary, \
-    tdma_noncons
+    calculate_internal_s_p, calculate_internal_s_u, \
+    calculate_internal_a_n, calculate_internal_a_s, const_flux_boundary, const_temp_boundary, insulated_boundary
 
 class HeatTransfer2D(object):
 
@@ -33,6 +33,7 @@ class HeatTransfer2D(object):
         self.s_p = np.empty(self.x_nodes*self.y_nodes, dtype=float)
         self.s_u = np.empty(self.x_nodes*self.y_nodes, dtype=float)
         self.phi = np.empty(self.x_nodes*self.y_nodes, dtype=float)
+        # fill all arrays with initial guess 0 
         self.a_p.fill(0) 
         self.a_e.fill(0)
         self.a_w.fill(0)
@@ -55,16 +56,15 @@ class HeatTransfer2D(object):
         
         for i in range(self.x_nodes):
 
-            col = []
+            row = []
 
             for j in range(self.y_nodes):
-                col.append(count)
+                row.append(count)
                 count += 1
             
-            grid.append(col)
+            grid.append(row)
 
         return np.array(grid) 
-
 
     def identify_boundary_nodes(self) -> dict:
         """
@@ -72,8 +72,6 @@ class HeatTransfer2D(object):
         this method of counting only allows for one node to have one boundary condition, N/S boundaries take precedent  
         """
         boundary_nodes = {}
-        # boundary_nodes['south_boundary'] = self.ident_grid[0]
-        # boundary_nodes['north_boundary'] = self.ident_grid[-1]
         boundary_nodes['south_boundary'] = [self.ident_grid[i][0] for i in range(1, self.x_nodes-1, 1)]
         boundary_nodes['north_boundary'] = [self.ident_grid[i][-1] for i in range(1, self.x_nodes-1, 1)]
         boundary_nodes['west_boundary'] = [self.ident_grid[0][i] for i in range(1, self.y_nodes-1, 1)]
@@ -83,10 +81,7 @@ class HeatTransfer2D(object):
         boundary_nodes['southwest_boundary'] = [self.ident_grid[0][0]] 
         boundary_nodes['northwest_boundary'] = [self.ident_grid[0][-1]] 
 
-        # now remove the intersected boundary nodes from their original boundar
-
         return boundary_nodes
-    
     
     def calculate_coefficients(self) -> None:
 
@@ -119,7 +114,7 @@ class HeatTransfer2D(object):
         # TODO: clean up this for loop into something smarter, maybe use 
         # for key, value in boundary_nodes.items() 
         for key in self.boundary_nodes.keys(): 
-                
+
             if key == 'north_boundary':
                 for node in self.boundary_nodes[key]: 
                     # source term 
@@ -205,17 +200,6 @@ class HeatTransfer2D(object):
 
             else: 
                 raise ValueError(f'Unknown boundary key {key}')
-        # calculate a_p 
-        # TODO: change the logic here so that a_p gets calcualted at the very end using vector addition 
-        # self.a_p = self.a_w + self.a_p + self.s_p
-
-        print(f'a_w:{self.a_w}')        
-        print(f'a_e:{self.a_e}')
-        print(f'a_n:{self.a_n}')
-        print(f'a_s:{self.a_s}')
-        print(f'a_p:{self.a_p}')
-        print(f's_p:{self.s_p}')
-        print(f's_u:{self.s_u}')
 
     def solve(self): 
         
@@ -224,8 +208,10 @@ class HeatTransfer2D(object):
         passes = 0 
         
         error = 1
+        phi_old = np.empty(self.x_nodes*self.y_nodes, dtype=float)
+        phi_old.fill(1)
 
-        while error >= 0.05 and passes < 100: 
+        while error >= 0.01: 
 
             for i in range(len(self.ident_grid)):
                 
@@ -245,26 +231,26 @@ class HeatTransfer2D(object):
                     ay = np.multiply(self.a_e[self.ident_grid[i]], self.phi[self.ident_grid[i+1]])
                     bay = np.multiply(self.a_w[self.ident_grid[i]], self.phi[self.ident_grid[i-1]])
 
-
                 cee = ay + bay + bee
-                print(f'lines:{self.ident_grid[i]}')
-                print(f'alpha:{alpha}')
-                print(f'beta:{beta}')
-                print(f'cee:{cee}')
-                print(f'ay:{ay}')
-                print(f'bay:{bay}')
-                print(f'bee:{bee}')
-                print(f'dee:{dee}')
                 solver = Tdma((alpha).tolist(), dee.tolist(), (beta).tolist(), cee.tolist())
 
                 temp = solver.solve()
-                print(temp)
 
                 self.phi[self.ident_grid[i]] = temp
-                print(self.phi)
+            
+            error = np.average(np.absolute(np.divide(np.subtract(self.phi, phi_old), phi_old)))
+            phi_old = self.phi.copy()
 
             passes += 1
-            print(f'Completed pass: {passes}')
+            print(f'Completed pass: {passes}, error: {error}')
+
+        return self.phi
+
+    def visualize(self): 
+
+        plt.figure()
+        plt.imshow(self.phi.reshape(self.x_nodes, self.y_nodes), cmap='hot', interpolation='nearest')
+        plt.show()
 
 class Tdma(object): 
 
@@ -293,14 +279,9 @@ class Tdma(object):
             
             if i == 0: 
                 self.C_prime[i] = self.C[i]/self.B[i]
-            else: 
-                self.C_prime[i] = self.C[i]/(self.B[i]-self.A[i]*self.C_prime[i-1])
-
-        for i in range(0, self.Dim, 1):
-            
-            if i == 0: 
                 self.D_prime[i] = self.D[i]/self.B[i]
             else: 
+                self.C_prime[i] = self.C[i]/(self.B[i]-self.A[i]*self.C_prime[i-1])
                 self.D_prime[i] = (self.D[i] + self.A[i]*self.D_prime[i-1]) / (self.B[i] - self.A[i]*self.C_prime[i-1])
 
         self.X[self.Dim-1] = self.D_prime[self.Dim-1]
