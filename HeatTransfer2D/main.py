@@ -5,8 +5,8 @@ import numpy as np
 def main(): 
 
     sim = HeatTransfer2D(
-        x_nodes=30,
-        y_nodes=40,  
+        x_nodes=300,
+        y_nodes=400,  
         x_length=0.3, 
         y_length=0.4, 
         k=1000,
