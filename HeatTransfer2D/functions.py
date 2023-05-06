@@ -60,7 +60,7 @@ def tdma_noncons(A, B, C, D):
         Dim = len(A)
         phi = np.empty(Dim)
 
-    for i in range(0, Dim, 1):
+    for i in range(1, Dim, 1):
         w = A[i] / B[i-1]
         B[i] = B[i] - w*C[i-1]
         D[i] = D[i] - w*D[i-1]
@@ -71,4 +71,38 @@ def tdma_noncons(A, B, C, D):
         phi[i] = (D[i]-C[i]*phi[i+1]) / B[i]
 
     return np.array(phi)
+
+def tdma_cons(A, B, C, D): 
+    if not (len(A) == len(B) == len(C) == len(D)): 
+        raise ValueError(f'All vectors must be same length,\
+                            provided dimensions {len(A), len(B), len(C), len(D)}')
+    else: 
+        dim = len(A) 
+        c_prime = np.zeros(dim) 
+        d_prime = np.zeros(dim) 
+        x_hurdur = np.zeros(dim) 
+
+    for i in range(0, dim-1, 1): 
+        
+        if i == 0: 
+            c_prime[i] = C[i]/B[i]
+        else: 
+            c_prime[i] = C[i]/(B[i]-A[i]*c_prime[i-1])
+
+    for i in range(0, dim, 1): 
+
+        if i == 0: 
+            d_prime[i] = D[i]/B[i]
+        else: 
+            d_prime[i] = (D[i]-A[i]*d_prime[i-1])/(B[i]-A[i]*c_prime[i-1])
+
+    x_hurdur[dim-1] = d_prime[dim-1]
+
+    for i in range(dim-2, -1, -1):
+
+        x_hurdur[i] = d_prime[i] - c_prime[i]*x_hurdur[i+1]
+
+    return x_hurdur
+    
+
 
