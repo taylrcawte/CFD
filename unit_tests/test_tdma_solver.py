@@ -1,11 +1,8 @@
 import unittest
 import numpy as np
-import sys
 
-sys.path.insert(0, '/home/taylr/code_dir/CFD/')
-from HeatTransfer1D.classes import Tdma
-from HeatTransfer2D.functions import tdma_noncons
-from HeatTransfer2D.classes import TdmaNonCons
+from modules.classes.classes1d import Tdma 
+from modules.functions.functions2d import tdma_noncons, tdma_cons
 
 class Test(unittest.TestCase):
     """
@@ -25,19 +22,16 @@ class Test(unittest.TestCase):
         matrix_c = np.diag(self.c[:-1], k=-1)
         self.coef_matrix = matrix_a + matrix_b + matrix_c
 
-        self.tdma = Tdma(self.a, self.b, self.c, self.d)
-        self.tdma2 = TdmaNonCons(self.a, self.b, self.c, self.d)
-
-    def test_1_compare_tdma_class_to_linalg(self): 
+    def test_1_compare_tdma1d_class_to_linalg(self): 
 
         gt = np.linalg.solve(self.coef_matrix, self.d) 
-
+        self.tdma = Tdma(self.a, self.b, self.c, self.d)
         pr = self.tdma.solve()
         
         for i in range(self.tdma.Dim): 
             self.assertAlmostEqual(gt[i], pr[i])
 
-    def test_2_compare_tdma_func_to_linalg(self): 
+    def test_2_compare_tdma2d_noncons_to_linalg(self): 
 
         gt = np.linalg.solve(self.coef_matrix, self.d)
 
@@ -46,11 +40,11 @@ class Test(unittest.TestCase):
         for i in range(len(self.a)): 
             self.assertAlmostEqual(gt[i], pr[i])
 
-    def test_3_compare_tdma_func_to_linalg(self): 
+    def test_3_compare_tdma2d_cons_to_linalg(self): 
 
         gt = np.linalg.solve(self.coef_matrix, self.d)
 
-        pr = self.tdma2(self.a, self.b, self.c, self.d)
+        pr = tdma_cons(self.a, self.b, self.c, self.d)
 
         for i in range(len(self.a)): 
             self.assertAlmostEqual(gt[i], pr[i])        

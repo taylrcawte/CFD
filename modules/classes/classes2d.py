@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sys 
-sys.path.insert(0, '/home/taylr/code_dir/CFD/HeatTransfer2D/') 
-from functions import calculate_internal_a_w, calculate_internal_a_e, calculate_internal_a_p, \
+from modules.functions.functions2d import calculate_internal_a_w, calculate_internal_a_e, calculate_internal_a_p, \
     calculate_internal_s_p, calculate_internal_s_u, \
     calculate_internal_a_n, calculate_internal_a_s, const_flux_boundary, const_temp_boundary, insulated_boundary, tdma_cons, tdma_noncons
 
@@ -246,75 +244,3 @@ class HeatTransfer2D(object):
         plt.imshow(self.phi.reshape(self.x_nodes, self.y_nodes), cmap='hot', interpolation='nearest')
         plt.show()
 
-class TdmaCons(object): 
-
-    def __init__(self, A, B, C, D):
-
-        self.A = A.copy() 
-        self.B = B.copy() 
-        self.C = C.copy() 
-        self.D = D.copy()
-        
-        if not (len(self.A) == len(self.B) == len(self.C) == len(self.D)): 
-            raise ValueError(f'All vectors must be same length,\
-                             provided dimensions {len(self.A), len(self.B), len(self.C), len(self.D)}')
-        else:
-            self.Dim = len(self.A)
-            self.X = np.empty(self.Dim, dtype=float)
-            self.X.fill(0)
-            self.C_prime = np.empty(self.Dim, dtype=float)
-            self.C_prime.fill(0)
-            self.D_prime = np.empty(self.Dim, dtype=float)
-            self.D_prime.fill(0)
-
-    def solve(self):
-
-        for i in range(0, self.Dim-2, 1):
-            if i == 0: 
-                self.C_prime[i] = self.C[i]/self.B[i]
-            else: 
-                self.C_prime[i] = self.C[i]/(self.B[i]-self.A[i]*self.C_prime[i-1])
-
-        for i in range(0, self.Dim-1, 1): 
-            if i == 0: 
-                self.D_prime[i] = self.D[i]/self.B[i]
-            else: 
-                self.D_prime[i] = (self.D[i] - self.A[i]*self.D_prime[i-1]) / (self.B[i] - self.A[i]*self.C_prime[i-1])
-
-        self.X[self.Dim-1] = self.D_prime[self.Dim-1]
-
-        for i in range(self.Dim-2, -1, -1):
-            self.X[i] = self.D_prime[i]-self.C_prime[i]*self.X[i+1]
-
-        return self.X
-
-
-class TdmaNonCons(object): 
-
-    def __init__(self, A, B, C, D):
-
-        self.A = A.copy() 
-        self.B = B.copy() 
-        self.C = C.copy() 
-        self.D = D.copy()
-
-        if not (len(self.A) == len(self.B) == len(self.C) == len(self.D)): 
-            raise ValueError(f'All vectors must be same length,\
-                             provided dimensions {len(self.A), len(self.B), len(self.C), len(self.D)}')
-        else:
-            self.Dim = len(self.A)
-            self.X = np.empty(self.Dim, dtype=float)
-
-    def solve(self):
-
-        for i in range(1, self.Dim-1, 1): 
-            w = self.A[i] / self.B[i-1]
-            self.B[i] = self.B[i] - w*self.C[i-1]
-            self.D[i] = self.D[i] - w*self.D[i-1]
-
-        self.X[self.Dim-1] = self.D[self.Dim-1] / self.B[self.Dim-1]
-
-        for i in range(self.Dim-2, -1, -1):
-            self.X[i] = (self.D[i]-self.C[i]*self.X[i+1]) / self.B[i]
-
-        return self.X
