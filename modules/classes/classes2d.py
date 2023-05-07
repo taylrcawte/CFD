@@ -227,7 +227,7 @@ class HeatTransfer2D(object):
                 # solver = TdmaCons(-1*alpha, dee, -1*beta, cee)
                 # temp = solver.solve()
                 # TODO: write unit tests for the tdma algs 
-                temp = tdma_cons(-1*alpha, dee, -1*beta, cee)
+                temp = tdma_noncons(-1*alpha, dee, -1*beta, cee)
                 self.phi[self.ident_grid[i]] = temp.copy()
             
             error = np.average(np.absolute(np.divide(np.subtract(self.phi, phi_old), phi_old)))
