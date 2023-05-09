@@ -6,7 +6,7 @@ from modules.functions.functions2d import calculate_internal_a_w, calculate_inte
 
 class HeatTransfer2D(object):
 
-    def __init__(self, x_nodes, y_nodes, x_length, y_length, k, bc_n, bc_s, bc_e, bc_w, q, thickness) -> None:
+    def __init__(self, x_nodes, y_nodes, x_length, y_length, k, bt_n, bt_s, bt_e, bt_w, q, thickness) -> None:
         
         self.x_nodes = x_nodes
         self.y_nodes = y_nodes 
@@ -14,10 +14,10 @@ class HeatTransfer2D(object):
         self.y_length = y_length
         self.k = k  # W / m.K 
         # m^2
-        self.bc_n = bc_n  # K TODO: turn all boundary conditions into a class, collapse the q, tinf, h, p, and bc_temps into this class
-        self.bc_s = bc_s  # K
-        self.bc_e = bc_e
-        self.bc_w = bc_w  
+        self.bt_n = bt_n  # K TODO: turn all boundary conditions into a class, collapse the q, tinf, h, p, and bc_temps into this class
+        self.bt_s = bt_s  # K
+        self.bt_e = bt_e
+        self.bt_w = bt_w  
         self.thickness = thickness
         self.q = q
  
@@ -43,6 +43,8 @@ class HeatTransfer2D(object):
         in a square grid the bottom left corner is the first node, increases occur right to left and bottom to top
         """
         count = 0 
+        grid = []
+
         grid = []
         
         for i in range(self.x_nodes):
@@ -110,8 +112,8 @@ class HeatTransfer2D(object):
             if key == 'north_boundary':
                 for node in self.boundary_nodes[key]: 
                     # source term 
-                    self.s_u[node] = const_temp_boundary(k=self.k, area=self.dx*self.thickness, bc=self.bc_n, dist=self.dy) 
-                    self.s_p[node] = -1*const_temp_boundary(k=self.k, area=self.dx*self.thickness, bc=self.bc_n, dist=self.dy) / self.bc_n
+                    self.s_u[node] = const_temp_boundary(k=self.k, area=self.dx*self.thickness, bc=self.bt_n, dist=self.dy) 
+                    self.s_p[node] = -1*const_temp_boundary(k=self.k, area=self.dx*self.thickness, bc=self.bt_n, dist=self.dy) / self.bt_n
                     # coefs
                     self.a_n[node] = 0
                     # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
@@ -150,8 +152,8 @@ class HeatTransfer2D(object):
             elif key == 'northwest_boundary': 
                 
                 for node in self.boundary_nodes[key]:
-                    self.s_u[node] = const_flux_boundary(q=500E3, area=self.dy*self.thickness) + (const_temp_boundary(self.k, self.dx*self.thickness, self.bc_n, self.dy))
-                    self.s_p[node] = -1*const_temp_boundary(self.k, self.dx*self.thickness, self.bc_n, self.dx) / self.bc_n
+                    self.s_u[node] = const_flux_boundary(q=500E3, area=self.dy*self.thickness) + (const_temp_boundary(self.k, self.dx*self.thickness, self.bt_n, self.dy))
+                    self.s_p[node] = -1*const_temp_boundary(self.k, self.dx*self.thickness, self.bt_n, self.dx) / self.bt_n
                     # coefs 
                     self.a_w[node] = 0
                     self.a_n[node] = 0
@@ -161,8 +163,8 @@ class HeatTransfer2D(object):
             elif key == 'northeast_boundary': 
                 
                 for node in self.boundary_nodes[key]:
-                    self.s_u[node] = const_temp_boundary(self.k, self.dx*self.thickness, self.bc_n, self.dy)
-                    self.s_p[node] = -1*const_temp_boundary(self.k, self.dx*self.thickness, self.bc_n, self.dy) / self.bc_n
+                    self.s_u[node] = const_temp_boundary(self.k, self.dx*self.thickness, self.bt_n, self.dy)
+                    self.s_p[node] = -1*const_temp_boundary(self.k, self.dx*self.thickness, self.bt_n, self.dy) / self.bt_n
                     # coefs 
                     self.a_e[node] = 0
                     self.a_n[node] = 0
