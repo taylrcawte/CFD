@@ -6,21 +6,21 @@ from modules.functions.functions2d import calculate_internal_a_w, calculate_inte
 
 class HeatTransfer2D(object):
 
-    def __init__(self, x_nodes, y_nodes, x_length, y_length, k, bt_n, bt_s, bt_e, bt_w, q, thickness) -> None:
+    def __init__(self, physical_properties, boundary_dict) -> None:
         
-        self.x_nodes = x_nodes
-        self.y_nodes = y_nodes 
-        self.x_length = x_length  # meters
-        self.y_length = y_length
-        self.k = k  # W / m.K 
+        self.x_nodes = physical_properties.x_nodes
+        self.y_nodes = physical_properties.y_nodes 
+        self.x_length = physical_properties.x_length  # meters
+        self.y_length = physical_properties.y_length
+        self.k = physical_properties.k  # W / m.K
+        self.boundary_dict = boundary_dict  # dict of all the boundary condition functions to be used at each boundary node, key: boundary name, value: function   
         # m^2
-        self.bt_n = bt_n  # K TODO: turn all boundary conditions into a class, collapse the q, tinf, h, p, and bc_temps into this class
-        self.bt_s = bt_s  # K
-        self.bt_e = bt_e
-        self.bt_w = bt_w  
-        self.thickness = thickness
-        self.q = q
- 
+        self.bt_n = physical_properties.bt_n  # K TODO: turn all boundary conditions into a class, collapse the q, tinf, h, p, and bc_temps into this class
+        self.bt_s = physical_properties.bt_s  # K
+        self.bt_e = physical_properties.bt_e
+        self.bt_w = physical_properties.bt_w  
+        self.thickness = physical_properties.thickness
+        self.q = physical_properties.q
 
         # init variables 
         self.a_p = np.zeros(self.x_nodes*self.y_nodes) 
@@ -65,6 +65,7 @@ class HeatTransfer2D(object):
         this method of counting only allows for one node to have one boundary condition, N/S boundaries take precedent  
         """
         # TODO: use slicing and intersects to select the boundary nodes 
+        # TODO: TODO: use slicing here for sure and intersects
         boundary_nodes = {}
         boundary_nodes['south_boundary'] = [self.ident_grid[i][0] for i in range(1, self.x_nodes-1, 1)]
         boundary_nodes['north_boundary'] = [self.ident_grid[i][-1] for i in range(1, self.x_nodes-1, 1)]
@@ -105,95 +106,16 @@ class HeatTransfer2D(object):
 
         self.boundary_nodes = self.identify_boundary_nodes()
 
-        # TODO: clean up this for loop into something smarter, maybe use 
-        # for key, value in boundary_nodes.items() 
-        for key in self.boundary_nodes.keys():
+        for key, nodes in self.boundary_nodes.items(): 
+            for node in nodes:
 
-            if key == 'north_boundary':
-                for node in self.boundary_nodes[key]: 
-                    # source term 
-                    self.s_u[node] = const_temp_boundary(k=self.k, area=self.dx*self.thickness, bc=self.bt_n, dist=self.dy) 
-                    self.s_p[node] = -1*const_temp_boundary(k=self.k, area=self.dx*self.thickness, bc=self.bt_n, dist=self.dy) / self.bt_n
-                    # coefs
-                    self.a_n[node] = 0
-                    # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
-
-            elif key == 'south_boundary': 
-                for node in self.boundary_nodes[key]: 
-                    # source term 
-                    self.s_u[node] = insulated_boundary()
-                    self.s_p[node] = insulated_boundary()
-                    # coefs
-                    self.a_s[node] = 0
-                    # self.a_e[node] = a_e  # removed this because it's not a necessary operation as it was filled in last step 
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node] 
-
-            elif key == 'west_boundary':
-                for node in self.boundary_nodes[key]: 
-                        # source term 
-                    self.s_u[node] = const_flux_boundary(q=500E3, area=self.dy*self.thickness)
-                    self.s_p[node] = insulated_boundary()
-                    # coefs
-                    self.a_w[node] = 0
-                    # self.a_e[node] = a_e  # emoved this because it's not a necessary operation as it was filled in last step 
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
-
-            elif key == 'east_boundary': 
-                for node in self.boundary_nodes[key]: 
-                        # source term 
-                    self.s_u[node] = insulated_boundary()
-                    self.s_p[node] = insulated_boundary()
-                    # coefs 
-                    self.a_e[node] = 0
-                    # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
-
-            elif key == 'northwest_boundary': 
-                
-                for node in self.boundary_nodes[key]:
-                    self.s_u[node] = const_flux_boundary(q=500E3, area=self.dy*self.thickness) + (const_temp_boundary(self.k, self.dx*self.thickness, self.bt_n, self.dy))
-                    self.s_p[node] = -1*const_temp_boundary(self.k, self.dx*self.thickness, self.bt_n, self.dx) / self.bt_n
-                    # coefs 
-                    self.a_w[node] = 0
-                    self.a_n[node] = 0
-                    # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
-
-            elif key == 'northeast_boundary': 
-                
-                for node in self.boundary_nodes[key]:
-                    self.s_u[node] = const_temp_boundary(self.k, self.dx*self.thickness, self.bt_n, self.dy)
-                    self.s_p[node] = -1*const_temp_boundary(self.k, self.dx*self.thickness, self.bt_n, self.dy) / self.bt_n
-                    # coefs 
-                    self.a_e[node] = 0
-                    self.a_n[node] = 0
-                    # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
-
-            elif key == 'southwest_boundary': 
-                
-                for node in self.boundary_nodes[key]:
-                    self.s_u[node] = const_flux_boundary(500E3, self.dx*self.thickness)
-                    self.s_p[node] = insulated_boundary()
-                    # coefs 
-                    self.a_w[node] = 0
-                    self.a_s[node] = 0
-                    # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
-
-            elif key == 'southeast_boundary': 
-                for node in self.boundary_nodes[key]:
-                    self.s_u[node] = insulated_boundary()
-                    self.s_p[node] = insulated_boundary()
-                    # coefs 
-                    self.a_e[node] = 0
-                    self.a_s[node] = 0
-                    # self.a_w[node] = a_w  # removed this because it's not a necesarry operation as it was filled in previous step
-                    self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
-
-            else: 
-                raise ValueError(f'Unknown boundary key {key}')
+                self.s_u[node] = self.boundary_dict[key]['s_u'] # ref the mutlilvl dict 
+                self.s_p[node] = self.boundary_dict[key]['s_p']
+                self.a_n[node] = self.boundary_dict[key]['a_n']
+                self.a_s[node] = self.boundary_dict[key]['a_s']
+                self.a_e[node] = self.boundary_dict[key]['a_e']
+                self.a_w[node] = self.boundary_dict[key]['a_w']
+                self.a_p[node] = self.a_w[node] + self.a_e[node] + self.a_n[node] + self.a_s[node] - self.s_p[node]
 
     def solve(self): 
         
@@ -245,4 +167,25 @@ class HeatTransfer2D(object):
         plt.figure()
         plt.imshow(self.phi.reshape(self.x_nodes, self.y_nodes), cmap='hot', interpolation='nearest')
         plt.show()
+
+class PhysicalProperties(object):
+
+    def __init__(self, x_nodes, y_nodes, x_length, y_length, thickness, k, bt_n, bt_s, bt_e, bt_w, q): 
+
+        self.x_length = x_length
+        self.y_length = y_length
+        self.thickness = thickness
+        self.x_nodes = x_nodes 
+        self.y_nodes = y_nodes
+        self.k = k
+        self.bt_n=bt_n 
+        self.bt_s=bt_s 
+        self.bt_e=bt_e
+        self.bt_w=bt_w 
+        self.q = q
+
+        self.dx = self.x_length / self.x_nodes
+        self.dy = self.y_length / self.y_nodes
+
+
 
